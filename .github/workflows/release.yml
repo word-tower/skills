@@ -1,0 +1,32 @@
+name: Publish release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish Skill release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          cat > release-notes.md <<'NOTES'
+          词塔 WordTower Skill
+
+          支持课程和阅读位置查询、文本与 EPUB 导入、学习统计与笔记导出，以及个人 ReadPilot 讲解。可用功能取决于会员等级及 Key 授权。
+
+          在 Assets 中下载 Source code (zip) 或 Source code (tar.gz)，解压后使用 skills/wordtower 目录安装。
+
+          在词塔「账户 → Skill 与 Token」创建以 wtk- 开头的 API Key，并在 AI 客户端本地配置 WORDTOWER_API_KEY。
+          NOTES
+          if ! gh release view "$RELEASE_TAG" > /dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" --verify-tag --title "WordTower Skill ${RELEASE_TAG}" --notes-file release-notes.md
+          fi

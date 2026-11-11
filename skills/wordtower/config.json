@@ -1,0 +1,5 @@
+{
+  "api_origin": "https://api.wordtower.cn",
+  "gateway_path": "/api/agent/v1/gateway",
+  "skill_version": "0.6.0"
+}
