@@ -2,6 +2,7 @@
 """Words Skill helper. Credentials stay in the environment, never argv/output."""
 import argparse
 import hashlib
+import html
 import json
 import os
 from pathlib import Path
@@ -84,17 +85,74 @@ def epub_preview(path, title, config):
     return call(params, config)
 
 
+def subtitle_time(value):
+    match = re.fullmatch(r"(?:(\d{2,}):)?([0-5]\d):([0-5]\d)[.,](\d{3})", value)
+    if not match:
+        raise ValueError("Invalid subtitle timestamp")
+    hours, minutes, seconds, millis = match.groups()
+    return int(hours or 0) * 3600 + int(minutes) * 60 + int(seconds) + int(millis) / 1000
+
+
+def read_subtitles(path):
+    if path.stat().st_size > 1024 * 1024:
+        raise ValueError("Subtitles must be at most 1 MiB")
+    content = path.read_text(encoding="utf-8-sig")
+    if path.suffix.lower() == ".json":
+        cues = json.loads(content)
+        if not isinstance(cues, list):
+            raise ValueError("Subtitle JSON must be a list")
+        return cues
+    if path.suffix.lower() not in {".srt", ".vtt"}:
+        raise ValueError("Choose SRT, VTT or JSON subtitles")
+    cues = []
+    content = content.replace("\r\n", "\n").replace("\r", "\n")
+    if not content.strip():
+        raise ValueError("No timed subtitles found")
+    for block in re.split(r"\n[ \t]*\n", content.strip()):
+        lines = block.splitlines()
+        first = lines[0].strip()
+        if path.suffix.lower() == ".vtt" and (
+            first.startswith("WEBVTT") or first in {"NOTE", "STYLE", "REGION"} or first.startswith("NOTE ")
+        ):
+            continue
+        index = 0 if "-->" in first else 1
+        if len(lines) <= index + 1 or "-->" not in lines[index]:
+            raise ValueError("Invalid subtitle cue")
+        times = lines[index].split("-->")
+        if len(times) != 2:
+            raise ValueError("Invalid subtitle cue")
+        end_parts = times[1].strip().split()
+        if not end_parts:
+            raise ValueError("Missing subtitle end time")
+        start = subtitle_time(times[0].strip())
+        end = subtitle_time(end_parts[0])
+        text = html.unescape(re.sub(r"<[^>]*>", "", "\n".join(lines[index + 1:]))).strip()
+        if not text or end <= start:
+            raise ValueError("Subtitle cue needs text and a positive duration")
+        cues.append({"text": text, "start": start, "duration": end - start})
+    if not cues:
+        raise ValueError("No timed subtitles found")
+    return cues
+
+
 def main():
     parser = argparse.ArgumentParser(description="Call Words using the official package configuration")
     parser.add_argument("request_file", nargs="?", help="JSON request file, without credentials")
     parser.add_argument("--text", type=Path, help="UTF-8 plaintext file to preview")
     parser.add_argument("--epub", type=Path, help="EPUB file to upload and preview")
+    parser.add_argument("--subtitles", type=Path, help="SRT, VTT or timed JSON subtitles")
+    parser.add_argument("--youtube", help="YouTube video URL for the subtitles")
     parser.add_argument("--title", help="Title for a file import")
     args = parser.parse_args()
-    if sum(bool(value) for value in (args.request_file, args.text, args.epub)) != 1:
-        parser.error("choose one JSON request, --text or --epub")
+    if sum(bool(value) for value in (args.request_file, args.text, args.epub, args.subtitles)) != 1:
+        parser.error("choose one JSON request, --text, --epub or --subtitles")
+    if bool(args.youtube) != bool(args.subtitles):
+        parser.error("--youtube and --subtitles must be used together")
     config = load_config()
-    if args.epub:
+    if args.subtitles:
+        result = call({"api_name": "/imports/youtube/preview", "title": args.title or args.subtitles.stem,
+                       "url": args.youtube, "subtitles": read_subtitles(args.subtitles)}, config)
+    elif args.epub:
         result = epub_preview(args.epub, args.title, config)
     elif args.text:
         if args.text.stat().st_size > 1024 * 1024:

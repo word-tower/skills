@@ -1,6 +1,6 @@
-# 文本和 EPUB 导入
+# 文本、EPUB 和 YouTube 导入
 
-文本需要 imports:text，EPUB 需要 imports:epub；状态需要 imports:read，创建导入连接时服务端同时授予状态权限。用户明确要求导入后，在权限、文件数和解析额度范围内自动提交，无需账户批准或确认页。
+预览、上传和提交需要 Pro 或 Ultra。文本需要 imports:text，EPUB 需要 imports:epub。查询状态需要 imports:read，创建导入连接时服务端同时授予状态权限，降级后仍可查询已提交任务。用户明确要求导入后，在权限、文件数和解析额度范围内自动提交，无需账户批准或确认页。
 
 ## 文本或 TXT
 
@@ -9,6 +9,29 @@
 ```json
 {"api_name":"/imports/preview","title":"My vocabulary story","text":"The user-selected passage."}
 ```
+
+## YouTube 视频与带时间戳字幕
+
+Pro 或 Ultra 使用 imports:text 导入 YouTube 课程，查询任务使用 imports:read。用户提供视频链接与字幕，或授权 Agent 取得字幕后再导入。
+
+本地 SRT、VTT 或 JSON 字幕可运行：
+
+```sh
+python3 scripts/request.py --youtube "https://www.youtube.com/watch?v=dQw4w9WgXcQ" --subtitles lesson.vtt --title "My YouTube lesson"
+```
+
+脚本读取 UTF-8 文件，输出预览。SRT/VTT 的时间转换为秒，去掉字幕排版标签。JSON 文件为字幕数组，每项包含 text、start、duration。用户仅提供 URL 时，先取得实际字幕内容再预览。
+
+结构化请求：
+
+```json
+{"api_name":"/imports/youtube/preview","title":"My YouTube lesson","url":"https://youtu.be/dQw4w9WgXcQ","subtitles":[{"text":"Hello world.","start":1.25,"duration":2.0},{"text":"A new lesson.","start":4.0,"duration":2.5}]}
+```
+
+start 和 duration 均为秒，可用小数，duration 必须大于 0。字幕需按 start 非递减排列，可保留真实的重叠时间段。保持原视频时间轴，截取片段时仍使用原视频秒数。将每段字幕中的换行合并为空格后计算正文位置。字幕的文字和时间必须对应用户指定视频，缺失时间戳时应取得带时间戳字幕。逐段时间用于同步播放与跳转，不能声称包含逐词对齐。
+
+预览返回 media_type=youtube、规范化 source_url、subtitle_count 和额度报价。继续使用 /imports/text，传 preview_id 和同一个 idempotency_key 提交，再通过 /imports/status 查询。kind=text 表示沿用文本导入的权限、限额和处理流程，课程会保留 YouTube 链接和字幕时间轴。每个视频课程计一次文件导入，解析费用按规范化字幕正文字符数计算。服务端记录链接和已提交字幕，不主动下载视频或抓取字幕。
+
 
 ## EPUB 文件
 

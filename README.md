@@ -4,7 +4,7 @@
 
 <h1 align="center">词塔 WordTower Skills</h1>
 
-[词塔 Skill](skills/wordtower/SKILL.md) 可以导入文本和 EPUB、从最近保存的段落接着读，以及在授权后把讨论写回笔记或个人 ReadPilot 讲解。
+[词塔 Skill](skills/wordtower/SKILL.md) 可以导入文本、EPUB、YouTube 视频与带时间戳字幕，从最近保存的段落接着读，以及在授权后把讨论写回笔记或个人 ReadPilot 讲解。
 
 ## 快速开始
 
@@ -41,3 +41,5 @@ export WORDTOWER_API_KEY='替换为你的 API Key'
 还可以试试「把这本 EPUB 的第 3 到第 5 章导入词塔」或「用词塔接着读，聊聊我停下的这段」。需要写回时，可以说「把刚才讨论的要点记到这段旁边」。
 
 有关授权、请求格式和错误处理，见[调用协议](skills/wordtower/references/protocol.md)。
+
+YouTube 导入可说「把这个 YouTube 视频和这份 VTT 字幕导入词塔，保留时间轴」。支持 SRT、VTT 和结构化 JSON 字幕，需要 Pro 或 Ultra 与「导入文本」权限。具体命令见[导入指引](skills/wordtower/references/importing.md#youtube-视频与带时间戳字幕)。
