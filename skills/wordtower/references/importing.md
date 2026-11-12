@@ -1,6 +1,6 @@
 # 文本、EPUB 和 YouTube 导入
 
-预览、上传和提交需要 Pro 或 Ultra。文本需要 imports:text，EPUB 需要 imports:epub。查询状态需要 imports:read，创建导入连接时服务端同时授予状态权限，降级后仍可查询已提交任务。用户明确要求导入后，在权限、文件数和解析额度范围内自动提交，无需账户批准或确认页。
+预览、上传和提交均需服务端开放对应操作及 Token 授权。文本及 YouTube 需要 imports:text，EPUB 需要 imports:epub，App 的「导入课程」统一授予这两项权限。查询状态需要 imports:read，创建导入连接时服务端同时授予状态权限。用户明确要求导入后，在每日次数和解析额度范围内自动提交。
 
 ## 文本或 TXT
 
@@ -12,7 +12,7 @@
 
 ## YouTube 视频与带时间戳字幕
 
-Pro 或 Ultra 使用 imports:text 导入 YouTube 课程，查询任务使用 imports:read。用户提供视频链接与字幕，或授权 Agent 取得字幕后再导入。
+使用 imports:text 导入 YouTube 课程，查询任务使用 imports:read。用户提供视频链接与字幕，或授权 Agent 取得字幕后再导入。
 
 本地 SRT、VTT 或 JSON 字幕可运行：
 
@@ -53,7 +53,7 @@ start 和 duration 均为秒，可用小数，duration 必须大于 0。字幕�
 
 用户要求“导入”就继续提交，不再重复询问是否确认。用户只要求预览、分析、比较或筛选方案时停在预览；只有范围不清、额度不足或需要改变内容/范围时说明问题。改正文/标题/来源必须新建预览；预览 15 分钟有效，跨月失效。只生成预览不建课、不占解析额度、不占每日文件次数。
 
-首次使用 /account/capabilities 的 import_usage 查看 limit、used、remaining、timezone 与 resets_at；agent_limits.daily_imports 是当前套餐的上限。所有 Key、文本与 EPUB 共用账号每日计数，当前三档默认均为 10，可由服务端分别调整。按 Asia/Shanghai 自然日重置，resets_at 是 UTC 时间。一次文本提交或一个 EPUB 任务计 1 个文件，章节数不影响次数。服务端接受的新任务（包括后续失败/取消的任务）均占 1 次；同一幂等请求重放不重复计数。不能通过换 Key、拆分任务或更换幂等键绕过限制。
+导入前通过 /account/capabilities 的 import_usage 查询 limit、used、remaining、timezone 与 resets_at，并结合 agent_limits 和 text_parse 余额判断是否可提交。限额可能动态调整，每次以最新服务端回包为准。所有 Key、文本、EPUB 与 YouTube 共用账号导入次数，按回包中的 timezone 和 resets_at 展示重置时间。一次文本、EPUB 或 YouTube 任务计一次，章节数不影响次数。服务端接受的新任务（包括后续失败或取消的任务）均计数，同一幂等请求重放不重复计数。
 
 提交前生成并保存随机 idempotency_key（例如 UUID），与 preview_id 一同请求：
 

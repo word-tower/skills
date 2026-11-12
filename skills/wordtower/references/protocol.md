@@ -8,15 +8,15 @@
 {"api_name":"/courses/list","limit":20}
 ```
 
-首次用 /_list 查看已授权操作，用 /account/capabilities 查看当前会员等级、有效 scopes、agent_limits、text_parse 余额和 import_usage。所有套餐按 Token 授权读取与导出。文本和 EPUB 导入、新增笔记与高亮、保存与调整个人 ReadPilot 讲解需要 Pro 或 Ultra。降级即时暂停旧 Key 的写权限，已提交任务仍可凭 imports:read 查询。
+首次用 /_list 查看已授权操作，用 /account/capabilities 查询有效 scopes、agent_limits、text_parse 余额和 import_usage。调用前以服务端返回的可用操作、授权及额度为准，不能按账号类型推断权限。
 
-导入无需账户批准页。用户明确要求导入且具备权限时，先预览并以服务端报价为准。Pro 和 Ultra 的输入、速率、并发和连接上限按套餐执行，每日文件上限默认各 10，可分别配置，按北京时间零点重置。App 和 Skill 共用解析额度，所有 Key 共用账号每日文件次数。
+用户明确要求导入且具备权限时，先查询当前权限和额度，再预览并以服务端报价为准提交。输入、速率、并发、连接及导入次数限制均以最新回包为准，重置时间使用 import_usage.timezone 和 resets_at。App 和 Skill 共用解析额度，所有 Key 共用账号导入次数。
 
 响应 request_id/api_version/data/error/upgrade_info。失败 data=null，按 error.code 处理：
 
 - INVALID_API_KEY：引导检查/重建连接，不显示 Key。
 - INSUFFICIENT_SCOPE：说明缺少授权，不能改走内部 API。
-- MEMBERSHIP_REQUIRED：当前为 Free。继续使用已授权的读取与导出；写入需要 Pro 或 Ultra，且 Token 必须包含相应权限。
+- MEMBERSHIP_REQUIRED：当前账号无法执行该操作。按服务端提示说明原因，引导用户在词塔账户设置中查看可用功能，不自行推断开放条件。
 - QUOTA_EXHAUSTED：额度不足，无新任务被接受，不能自动购买/重复扣费。
 - CONFIRMATION_REQUIRED：仅旧服务会返回；停止自动提交并说明服务端仍要求旧确认流程，不伪造批准、不索取登录 JWT。
 - PREVIEW_EXPIRED：重新预览，不复用失效内容；用户仍要求导入时可继续自动提交。
