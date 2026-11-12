@@ -2,7 +2,7 @@
 name: wordtower
 description: 词塔（WordTower，也称 wordtower）的官方学习 Skill。用于导入文本、EPUB 或 YouTube 视频与带时间戳字幕（SRT/VTT/JSON）、筛选章节、从已读位置接着读和讨论、查询阅读历史和生词、导出统计或笔记、将讨论写回笔记和高亮、保存个人 ReadPilot 讲解。
 metadata:
-  version: "0.7.0"
+  version: "0.7.1"
 ---
 
 # 词塔（WordTower）学习助手

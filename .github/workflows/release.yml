@@ -21,7 +21,9 @@ jobs:
           cat > release-notes.md <<'NOTES'
           词塔 WordTower Skill
 
-          支持课程和阅读位置查询、文本与 EPUB 导入、学习统计与笔记导出，以及个人 ReadPilot 讲解。可用功能取决于会员等级及 Key 授权。
+          支持课程和阅读位置查询、文本与 EPUB 导入、YouTube 视频与时间戳字幕导入、学习统计与笔记导出，以及个人 ReadPilot 讲解。
+
+          可用操作通过 /_list 查询，权限、额度、剩余导入次数和重置时间以 /account/capabilities 的实时回包为准。
 
           在 Assets 中下载 Source code (zip) 或 Source code (tar.gz)，解压后使用 skills/wordtower 目录安装。
 
