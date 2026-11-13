@@ -25,6 +25,8 @@ jobs:
 
           可用操作通过 /_list 查询，权限、额度、剩余导入次数和重置时间以 /account/capabilities 的实时回包为准。
 
+          标注来源通过 origin 区分。Agent 独立新增记为 agent，合并结果及 App 编辑记为 user。Agent 当前支持标注读取、导出、新增和合并。
+
           在 Assets 中下载 Source code (zip) 或 Source code (tar.gz)，解压后使用 skills/wordtower 目录安装。
 
           在词塔「账户 → Skill 与 Token」创建以 wtk- 开头的 API Key，并在 AI 客户端本地配置 WORDTOWER_API_KEY。
