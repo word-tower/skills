@@ -97,13 +97,33 @@ def read_subtitles(path):
     if path.stat().st_size > 1024 * 1024:
         raise ValueError("Subtitles must be at most 1 MiB")
     content = path.read_text(encoding="utf-8-sig")
-    if path.suffix.lower() == ".json":
+    if path.suffix.lower() in {".json", ".json3"}:
         cues = json.loads(content)
+        if isinstance(cues, dict) and isinstance(cues.get("events"), list):
+            converted = []
+            for event in cues["events"]:
+                if not isinstance(event, dict):
+                    raise ValueError("Invalid JSON3 event")
+                segments = event.get("segs", [])
+                if not isinstance(segments, list) or any(not isinstance(segment, dict) for segment in segments):
+                    raise ValueError("Invalid JSON3 segments")
+                text = "".join(segment.get("utf8", "") for segment in segments)
+                if not text.strip():
+                    continue
+                if not all(isinstance(event.get(key), (int, float)) for key in ("tStartMs", "dDurationMs")):
+                    raise ValueError("JSON3 captions require start and duration")
+                cue = {"text": text, "start": event["tStartMs"] / 1000,
+                       "duration": event["dDurationMs"] / 1000}
+                if any("tOffsetMs" in segment for segment in segments):
+                    cue["segs"] = [{"utf8": segment["utf8"], "tOffsetMs": segment.get("tOffsetMs", 0)}
+                                   for segment in segments if segment.get("utf8")]
+                converted.append(cue)
+            cues = converted
         if not isinstance(cues, list):
             raise ValueError("Subtitle JSON must be a list")
         return cues
     if path.suffix.lower() not in {".srt", ".vtt"}:
-        raise ValueError("Choose SRT, VTT or JSON subtitles")
+        raise ValueError("Choose SRT, VTT, JSON or JSON3 subtitles")
     cues = []
     content = content.replace("\r\n", "\n").replace("\r", "\n")
     if not content.strip():
@@ -140,7 +160,7 @@ def main():
     parser.add_argument("request_file", nargs="?", help="JSON request file, without credentials")
     parser.add_argument("--text", type=Path, help="UTF-8 plaintext file to preview")
     parser.add_argument("--epub", type=Path, help="EPUB file to upload and preview")
-    parser.add_argument("--subtitles", type=Path, help="SRT, VTT or timed JSON subtitles")
+    parser.add_argument("--subtitles", type=Path, help="SRT, VTT, JSON or YouTube JSON3 subtitles")
     parser.add_argument("--youtube", help="YouTube video URL for the subtitles")
     parser.add_argument("--title", help="Title for a file import")
     args = parser.parse_args()

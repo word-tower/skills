@@ -14,13 +14,13 @@
 
 使用 imports:text 导入 YouTube 课程，查询任务使用 imports:read。用户提供视频链接与字幕，或授权 Agent 取得字幕后再导入。
 
-本地 SRT、VTT 或 JSON 字幕可运行：
+优先获取 YouTube 原始 JSON3 字幕（例如下载工具的 `json3` 字幕格式），保留 `events[].segs[].tOffsetMs`。本地 SRT、VTT、JSON 或 JSON3 字幕可运行：
 
 ```sh
-python3 scripts/request.py --youtube "https://www.youtube.com/watch?v=dQw4w9WgXcQ" --subtitles lesson.vtt --title "My YouTube lesson"
+python3 scripts/request.py --youtube "https://www.youtube.com/watch?v=dQw4w9WgXcQ" --subtitles lesson.json3 --title "My YouTube lesson"
 ```
 
-脚本读取 UTF-8 文件，输出预览。SRT/VTT 的时间转换为秒，去掉字幕排版标签。JSON 文件为字幕数组，每项包含 text、start、duration。用户仅提供 URL 时，先取得实际字幕内容再预览。
+脚本读取 UTF-8 文件，输出预览。SRT/VTT 的时间转换为秒，去掉字幕排版标签。JSON 文件可为字幕数组（每项包含 text、start、duration），或包含 events 的原始 JSON3 对象。JSON3 会保留逐词 segs 的 utf8 和 tOffsetMs，避免先转 SRT/VTT 丢失词时间。用户仅提供 URL 时，先取得实际字幕内容再预览。
 
 结构化请求：
 
@@ -28,9 +28,9 @@ python3 scripts/request.py --youtube "https://www.youtube.com/watch?v=dQw4w9WgXc
 {"api_name":"/imports/youtube/preview","title":"My YouTube lesson","url":"https://youtu.be/dQw4w9WgXcQ","subtitles":[{"text":"Hello world.","start":1.25,"duration":2.0},{"text":"A new lesson.","start":4.0,"duration":2.5}]}
 ```
 
-start 和 duration 均为秒，可用小数，duration 必须大于 0。字幕需按 start 非递减排列，可保留真实的重叠时间段。保持原视频时间轴，截取片段时仍使用原视频秒数。将每段字幕中的换行合并为空格后计算正文位置。字幕的文字和时间必须对应用户指定视频，缺失时间戳时应取得带时间戳字幕。逐段时间用于同步播放与跳转，不能声称包含逐词对齐。
+start 和 duration 均为秒，可用小数，duration 必须大于 0。字幕需按 start 非递减排列，可保留真实的重叠时间段。保持原视频时间轴，截取片段时仍使用原视频秒数。将每段字幕中的换行合并为空格后计算正文位置。字幕的文字和时间必须对应用户指定视频，缺失时间戳时应取得带时间戳字幕。逐段时间用于同步播放与跳转。只有源字幕带真实词偏移时才保留逐词同步，不按字数均分伪造词时间。结构化字幕可传 segs 数组，每项为 utf8 和 tOffsetMs（相对该字幕起点的毫秒数），拼接文字需与 text 一致，偏移非负、有序且小于 duration × 1000。
 
-预览返回 media_type=youtube、规范化 source_url、subtitle_count 和额度报价。继续使用 /imports/text，传 preview_id 和同一个 idempotency_key 提交，再通过 /imports/status 查询。kind=text 表示沿用文本导入的权限、限额和处理流程，课程会保留 YouTube 链接和字幕时间轴。每个视频课程计一次文件导入，解析费用按规范化字幕正文字符数计算。服务端记录链接和已提交字幕，不主动下载视频或抓取字幕。
+预览返回 media_type=youtube、规范化 source_url、subtitle_count、word_timing_count 和额度报价。word_timing_count 大于 0 表示生成了逐词边界；为 0 时明确告知只有字幕段落时间。继续使用 /imports/text，传 preview_id 和同一个 idempotency_key 提交，再通过 /imports/status 查询。kind=text 表示沿用文本导入的权限、限额和处理流程，课程会保留 YouTube 链接和字幕时间轴。每个视频课程计一次文件导入，解析费用按规范化字幕正文字符数计算。服务端记录链接和已提交字幕，不主动下载视频或抓取字幕。
 
 
 ## EPUB 文件

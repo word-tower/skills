@@ -14,7 +14,7 @@ metadata:
 | 任务 | 文档 |
 | --- | --- |
 | 自动导入文本/TXT/EPUB、查看额度与每日文件次数、查询任务状态 | [导入](references/importing.md) |
-| 将 YouTube URL 和带时间戳字幕导入视频课程，支持 SRT、VTT、JSON | [导入](references/importing.md#youtube-视频与带时间戳字幕) |
+| 将 YouTube URL 和带时间戳字幕导入视频课程，支持 JSON3 逐词时间及 SRT、VTT、JSON | [导入](references/importing.md#youtube-视频与带时间戳字幕) |
 | “第3—5章”、跳过指定章节、仅导入某类题材（如非政治类） | [EPUB 选章与题材筛选](references/epub-selection.md) |
 | 查询课程/生词、读章节正文、伴读和总结 | [读取](references/reading.md) |
 | “昨晚看了什么书/哪一章”“现在停在哪个段落”、查询指定时间段阅读历史 | [读取：阅读位置与历史](references/reading.md#阅读位置与历史) |
