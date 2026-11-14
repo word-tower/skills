@@ -12,12 +12,32 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - name: Publish Skill release
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
+          python3 - <<'PYTHON'
+          import subprocess
+          import zipfile
+          import os
+          from pathlib import PurePosixPath
+
+          files = subprocess.check_output(["git", "ls-files", "skills/wordtower"], text=True).splitlines()
+          with zipfile.ZipFile(f"wordtower-{os.environ['RELEASE_TAG']}.zip", "w", zipfile.ZIP_DEFLATED) as archive:
+              for name in files:
+                  path = PurePosixPath(name)
+                  relative = path.relative_to("skills/wordtower")
+                  allowed = str(relative) in {"SKILL.md", "config.json"} or (
+                      len(relative.parts) == 2 and (
+                          relative.parts[0] == "references" and relative.suffix == ".md" or
+                          relative.parts[0] == "scripts" and relative.suffix == ".py"))
+                  if not allowed:
+                      raise SystemExit(f"Unexpected Skill release file: {name}")
+                  archive.write(name, str(PurePosixPath("wordtower") / relative))
+          PYTHON
           cat > release-notes.md <<'NOTES'
           词塔 WordTower Skill
 
@@ -27,10 +47,13 @@ jobs:
 
           标注来源通过 origin 区分。Agent 独立新增记为 agent，合并结果及 App 编辑记为 user。Agent 当前支持标注读取、导出、新增和合并。
 
-          在 Assets 中下载 Source code (zip) 或 Source code (tar.gz)，解压后使用 skills/wordtower 目录安装。
+          本次更新支持直接读取 YouTube JSON3 字幕，保留真实逐词时间偏移并保存到课程。预览返回 word_timing_count，字幕段落时间导入继续可用。JSON3 逐词导入需要服务端已部署对应的校验与持久化更新。
+
+          在 Assets 中下载 wordtower 版本 ZIP，解压后使用 wordtower 目录安装。也可运行 npx skills add word-tower/skills -g 安装。
 
           在词塔「账户 → Skill 与 Token」创建以 wtk- 开头的 API Key，并在 AI 客户端本地配置 WORDTOWER_API_KEY。
           NOTES
           if ! gh release view "$RELEASE_TAG" > /dev/null 2>&1; then
             gh release create "$RELEASE_TAG" --verify-tag --title "WordTower Skill ${RELEASE_TAG}" --notes-file release-notes.md
           fi
+          gh release upload "$RELEASE_TAG" "wordtower-${RELEASE_TAG}.zip" --clobber
