@@ -36,8 +36,9 @@ class BuildTests(unittest.TestCase):
                         names = archive.namelist()
                         self.assertEqual(len(names), len(set(names)))
                         self.assertFalse(any(part in name for name in names for part in (
-                            "__pycache__", ".idea", ".git/", "server.py", ".env")))
-                        prefix = "skills/wordtower/" if target in {"claude-code", "workbuddy"} else "wordtower/"
+                            "__pycache__", ".idea", ".git/", "server.py", ".env",
+                            "release-skills", "CLAUDE.md", "CHANGELOG.md")))
+                        prefix = "skills/wordtower/" if target == "workbuddy" else "wordtower/"
                         for name in builder.SKILL_FILES:
                             if target == "workbuddy" and (name == "SKILL.md" or name.startswith("references/")):
                                 continue
@@ -57,20 +58,10 @@ class BuildTests(unittest.TestCase):
         self.assertNotIn("使用包内 scripts/request.py 调用", text)
         self.assertIn("凭证由 WorkBuddy 连接表单管理", text)
 
-    def test_codex_config_uses_environment_reference(self):
-        import tomllib
-        _, entries = builder.package_entries("codex")
-        config = tomllib.loads(entries["mcp-config.example.toml"].decode())
-        self.assertEqual(config["mcp_servers"]["wordtower"], {
-            "url": builder.MCP_URL, "bearer_token_env_var": "WORDTOWER_API_KEY"})
-
-    def test_claude_config_is_optional_and_uses_http(self):
-        _, entries = builder.package_entries("claude-code")
-        plugin = json.loads(entries[".claude-plugin/plugin.json"])
-        self.assertNotIn("mcpServers", plugin)
-        server = json.loads(entries["mcp-config.example.json"])["mcpServers"]["wordtower"]
-        self.assertEqual(server["type"], "http")
-        self.assertEqual(server["headers"]["Authorization"], "Bearer ${WORDTOWER_API_KEY}")
+    def test_removed_client_zip_targets_are_rejected(self):
+        for target in ("codex", "claude-code"):
+            with self.subTest(target=target), self.assertRaises(ValueError):
+                builder.package_entries(target)
 
     def test_missing_sources_do_not_replace_existing_artifact(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -89,12 +80,12 @@ class BuildTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 builder.read(root, "linked")
 
-    def test_all_command_writes_four_packages(self):
+    def test_all_command_writes_two_packages(self):
         with tempfile.TemporaryDirectory() as temporary:
             result = subprocess.run([sys.executable, str(ROOT / "scripts/build.py"),
                 "--all", "--output-dir", temporary], capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertEqual(len(list(Path(temporary).glob("*.zip"))), 4)
+            self.assertEqual(len(list(Path(temporary).glob("*.zip"))), 2)
             invalid = subprocess.run([sys.executable, str(ROOT / "scripts/build.py"),
                 "--all", "--output", str(Path(temporary) / "bad.zip")], capture_output=True)
             self.assertNotEqual(invalid.returncode, 0)

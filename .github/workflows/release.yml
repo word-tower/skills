@@ -38,11 +38,12 @@ jobs:
           cat > release-notes.md <<'NOTES'
           词塔 WordTower
 
-          Assets 包含普通 Skill、WorkBuddy MCP 连接器、Claude Code 插件和 Codex 安装材料。
+          Assets 仅包含通用 Skill 和 WorkBuddy MCP 连接器两个 ZIP。
           各渠道共用 Skill 脚本与领域文档；按客户端选择一个包，安装与 Key 配置见仓库 README。
 
           通用安装：npx skills add word-tower/skills -g
           Claude Code：添加 word-tower/skills 插件市场，安装 wordtower@wordtower。
+          Codex 使用通用 Skill，Claude Code 使用插件市场；MCP 配置示例见客户端指引，连接需单独配置。
           WorkBuddy ZIP 需在连接器平台审核发布，不会随 GitHub Release 自动上架。
 
           权限、额度及可用操作以服务端实时返回为准。包内不包含用户 Key 或后端服务代码。
@@ -50,4 +51,6 @@ jobs:
           if ! gh release view "$RELEASE_TAG" > /dev/null 2>&1; then
             gh release create "$RELEASE_TAG" --verify-tag --title "WordTower ${RELEASE_TAG}" --notes-file release-notes.md
           fi
-          gh release upload "$RELEASE_TAG" dist/*.zip --clobber
+          SKILL_VERSION="${RELEASE_TAG#v}"
+          CONNECTOR_VERSION=$(python3 -c 'import json; print(json.load(open("connectors/workbuddy/connector-meta.json"))["version"])')
+          gh release upload "$RELEASE_TAG" "dist/wordtower-${SKILL_VERSION}.zip" "dist/wordtower-workbuddy-${CONNECTOR_VERSION}.zip" --clobber

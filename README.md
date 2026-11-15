@@ -68,4 +68,6 @@ WorkBuddy 可使用带 API Key 输入表单的词塔 MCP 连接器，安装与�
 python3 scripts/build.py --all
 ```
 
-在 `dist/` 生成普通 Skill、WorkBuddy 连接器、Claude Code 插件和 Codex 安装材料。业务脚本、领域文档和 Skill 路由共用一份源码，WorkBuddy 只适配凭证与 MCP 调用协议。构建不修改本机客户端配置，也不读取 Key。完整参数、版本与更新方式见[构建与发布](docs/clients.md#构建与发布)。
+在 `dist/` 仅生成通用 Skill 和 WorkBuddy 连接器两个 ZIP。业务脚本、领域文档和 Skill 路由共用一份源码，WorkBuddy 只适配凭证与 MCP 调用协议。构建不修改本机客户端配置，也不读取 Key。完整参数、版本与更新方式见[构建与发布](docs/clients.md#构建与发布)。
+
+Claude Code 使用插件市场安装，Codex 使用通用 Skill，无需专用 ZIP。两者的 MCP 配置示例保留在[客户端指引](docs/clients.md)中，需另行配置；Skill 默认仍使用网关。

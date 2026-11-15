@@ -18,7 +18,7 @@ SKILL_FILES = (
     "references/annotations.md", "scripts/request.py", "scripts/export.py",
     "scripts/epub_select.py", "scripts/readpilot_validate.py", "scripts/youtube_subtitles.py",
 )
-TARGETS = ("skill", "workbuddy", "claude-code", "codex")
+TARGETS = ("skill", "workbuddy")
 
 
 def read(root, name):
@@ -91,23 +91,7 @@ def package_entries(target):
         return workbuddy_entries()
     if target not in TARGETS:
         raise ValueError("Unknown target")
-    prefix = "skills/wordtower/" if target == "claude-code" else "wordtower/"
-    entries = {prefix + name: read(SKILL, name) for name in SKILL_FILES}
-    if target == "claude-code":
-        entries[".claude-plugin/plugin.json"] = read(ROOT, ".claude-plugin/plugin.json")
-    if target in {"claude-code", "codex"}:
-        guide = read(ROOT, "docs/clients.md").decode().replace(
-            "(../connectors/", "(https://github.com/word-tower/skills/blob/main/connectors/")
-        entries["INSTALL.md"] = guide.encode()
-        # These are examples only; they do not automatically register an MCP server.
-        if target == "codex":
-            entries["mcp-config.example.toml"] = (
-                '[mcp_servers.wordtower]\nurl = "' + MCP_URL + '"\n'
-                'bearer_token_env_var = "WORDTOWER_API_KEY"\n').encode()
-        else:
-            entries["mcp-config.example.json"] = json.dumps({"mcpServers": {"wordtower": {
-                "type": "http", "url": MCP_URL,
-                "headers": {"Authorization": "Bearer ${WORDTOWER_API_KEY}"}}}}, indent=2).encode()
+    entries = {"wordtower/" + name: read(SKILL, name) for name in SKILL_FILES}
     return version(), entries
 
 
