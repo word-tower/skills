@@ -61,12 +61,15 @@ def call(payload, config):
         raise SystemExit(1)
 
 
-def epub_preview(path, title, config):
-    if path.stat().st_size > 20 * 1024 * 1024:
+def read_epub(path):
+    with path.open("rb") as source:
+        data = source.read(20 * 1024 * 1024 + 1)
+    if len(data) > 20 * 1024 * 1024:
         raise ValueError("EPUB must be at most 20 MiB")
-    data = path.read_bytes()
-    upload = call({"api_name": "/imports/upload-url", "file_name": path.name, "size_bytes": len(data),
-                   "sha256": hashlib.sha256(data).hexdigest()}, config)["data"]
+    return data
+
+
+def upload_epub(data, upload):
     parsed = urlsplit(upload["upload_url"])
     if parsed.scheme != "https" or not parsed.hostname or not parsed.hostname.endswith(".myqcloud.com") or parsed.username or parsed.password:
         raise ValueError("Unexpected upload destination")
@@ -80,8 +83,16 @@ def epub_preview(path, title, config):
     except HTTPError as error:
         error.close()
         raise ValueError(f"EPUB upload failed (HTTP {error.code}); do not submit an import") from None
-    params = {"api_name": "/imports/epub/preview", "upload_id": upload["upload_id"]}
-    if title: params["title"] = title
+    return {"api_name": "/imports/epub/preview", "upload_id": upload["upload_id"]}
+
+
+def epub_preview(path, title, config):
+    data = read_epub(path)
+    upload = call({"api_name": "/imports/upload-url", "file_name": path.name, "size_bytes": len(data),
+                   "sha256": hashlib.sha256(data).hexdigest()}, config)["data"]
+    params = upload_epub(data, upload)
+    if title:
+        params["title"] = title
     return call(params, config)
 
 
@@ -163,36 +174,61 @@ def main():
     parser.add_argument("--subtitles", type=Path, help="SRT, VTT, JSON or YouTube JSON3 subtitles")
     parser.add_argument("--youtube", help="YouTube video URL for the subtitles")
     parser.add_argument("--title", help="Title for a file import")
+    parser.add_argument("--prepare-only", action="store_true", help="Prepare parameters locally without credentials or API calls")
+    parser.add_argument("--upload-response", type=Path, help="MCP signed upload response; upload EPUB without an API Key")
+    parser.add_argument("--expected-sha256", help="Original EPUB hash from the upload request")
     args = parser.parse_args()
     if sum(bool(value) for value in (args.request_file, args.text, args.epub, args.subtitles)) != 1:
         parser.error("choose one JSON request, --text, --epub or --subtitles")
     if bool(args.youtube) != bool(args.subtitles):
         parser.error("--youtube and --subtitles must be used together")
-    config = load_config()
-    if args.subtitles:
-        result = call({"api_name": "/imports/youtube/preview", "title": args.title or args.subtitles.stem,
-                       "url": args.youtube, "subtitles": read_subtitles(args.subtitles)}, config)
+    if args.upload_response and (not args.epub or args.prepare_only or not args.expected_sha256):
+        parser.error("--upload-response requires --epub and --expected-sha256, without --prepare-only")
+    if args.expected_sha256 and not args.upload_response:
+        parser.error("--expected-sha256 requires --upload-response")
+    if args.upload_response:
+        data = read_epub(args.epub)
+        if hashlib.sha256(data).hexdigest() != args.expected_sha256:
+            raise ValueError("EPUB changed after requesting the upload URL")
+        if args.upload_response.stat().st_size > 1024 * 1024:
+            raise ValueError("Upload response must be at most 1 MiB")
+        response = json.loads(args.upload_response.read_text(encoding="utf-8-sig"))
+        if not isinstance(response, dict):
+            raise ValueError("Upload response must be a JSON object")
+        result = upload_epub(data, response.get("data", response))
+        if args.title:
+            result["title"] = args.title
     elif args.epub:
-        result = epub_preview(args.epub, args.title, config)
-    elif args.text:
-        if args.text.stat().st_size > 1024 * 1024:
-            raise ValueError("Text file must be at most 1 MiB")
-        result = call({"api_name": "/imports/preview", "title": args.title or args.text.stem,
-                       "text": args.text.read_text(encoding="utf-8-sig")}, config)
+        if args.prepare_only:
+            data = read_epub(args.epub)
+            result = {"api_name": "/imports/upload-url", "file_name": args.epub.name,
+                      "size_bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()}
+        else:
+            result = epub_preview(args.epub, args.title, load_config())
     else:
-        path = Path(args.request_file)
-        if path.stat().st_size > 1024 * 1024:
-            raise ValueError("Request file must be at most 1 MiB")
-        payload = json.loads(path.read_text(encoding="utf-8-sig"))
-        if not isinstance(payload, dict): raise ValueError("Request must be a JSON object")
-        result = call(payload, config)
+        if args.subtitles:
+            payload = {"api_name": "/imports/youtube/preview", "title": args.title or args.subtitles.stem,
+                       "url": args.youtube, "subtitles": read_subtitles(args.subtitles)}
+        elif args.text:
+            if args.text.stat().st_size > 1024 * 1024:
+                raise ValueError("Text file must be at most 1 MiB")
+            payload = {"api_name": "/imports/preview", "title": args.title or args.text.stem,
+                       "text": args.text.read_text(encoding="utf-8-sig")}
+        else:
+            path = Path(args.request_file)
+            if path.stat().st_size > 1024 * 1024:
+                raise ValueError("Request file must be at most 1 MiB")
+            payload = json.loads(path.read_text(encoding="utf-8-sig"))
+            if not isinstance(payload, dict):
+                raise ValueError("Request must be a JSON object")
+        result = payload if args.prepare_only else call(payload, load_config())
     print(json.dumps(result, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":
     try:
         main()
-    except (ValueError, OSError, URLError):
+    except (ValueError, OSError, KeyError, TypeError, URLError):
         # Never stringify network errors: they can contain presigned URLs.
         print("Request failed. Check WORDTOWER_API_KEY, API configuration, file encoding and connection; preserve the original idempotency key.", file=sys.stderr)
         raise SystemExit(1)

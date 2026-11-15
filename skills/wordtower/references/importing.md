@@ -14,6 +14,20 @@
 
 使用 imports:text 导入 YouTube 课程，查询任务使用 imports:read。用户提供视频链接与字幕，或授权 Agent 取得字幕后再导入。
 
+### 只有视频链接时
+
+使用包内脚本获取单视频自带字幕，不依赖第三方 Skill、yt-dlp、FFmpeg 或本地转录；运行需要 Python 3 和可访问 YouTube 的网络。
+
+```sh
+python3 scripts/youtube_subtitles.py "https://www.youtube.com/watch?v=aDblEBU41nA" --output ./youtube-lesson
+```
+
+脚本先读取视频页，再按需通过 InnerTube 获取原始字幕，默认英文。`--language en-US` 可指定原始语言，`--list` 仅查看可用语言。优先选自动字幕以保留 JSON3 真实词偏移；源字幕没有词时间时只保留段落时间。一次只处理所选视频，不批量处理播放列表。
+
+输出包含 subtitle_file、preview_request、subtitle_count 和 word_timing_available。脚本仅下载字幕、生成本地预览请求，不读取词塔 Key，不提交课程或消耗词塔额度。读取 preview_request 指向的 JSON 后，普通 Skill 执行 `python3 scripts/request.py 实际预览请求路径` 获取服务端预览；MCP 客户端移除 api_name 后调用 `wordtower_imports_youtube_preview`，不向本地脚本传连接表单的 Key。随后按下文规则提交和查询状态。
+
+无字幕、所选语言缺失、登录验证或限流时，说明实际错误，请用户提供已有字幕文件；不伪造字幕、不自动安装依赖或下载音视频。YouTube 接口可能变化，单次成功不代表所有视频均可获取。词塔仍支持直接读取用户已有字幕。
+
 优先获取 YouTube 原始 JSON3 字幕（例如下载工具的 `json3` 字幕格式），保留 `events[].segs[].tOffsetMs`。本地 SRT、VTT、JSON 或 JSON3 字幕可运行：
 
 ```sh

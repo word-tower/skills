@@ -2,7 +2,7 @@
 name: wordtower
 display_name: 词塔
 display_name_en: WordTower
-version: "0.1.0"
+version: "0.1.2"
 description: 通过词塔 MCP 连接器导入英语学习内容，查询阅读位置与生词，导出统计和笔记，保存讨论总结及个人 ReadPilot 讲解。
 description_zh: 通过词塔 MCP 连接器导入英语学习内容，查询阅读位置与生词，导出统计和笔记，保存讨论总结及个人 ReadPilot 讲解。
 description_en: Use the WordTower MCP connector to import English content, review reading and vocabulary, export statistics and notes, and save personal ReadPilot guides.
@@ -11,6 +11,18 @@ description_en: Use the WordTower MCP connector to import English content, revie
 # 词塔学习助手
 
 用户说「词塔」「WordTower」或「wordtower」时使用词塔连接器工具。凭证由 WorkBuddy 的连接表单管理。缺少连接时，引导用户打开词塔连接器，填入从词塔「账户 → Skill 与 Token」创建的 API Key。不要让用户把 Key 发到对话里。
+
+先阅读 [MCP 调用协议](references/protocol.md)。按任务阅读共享领域文档，并使用包内本地辅助脚本。
+
+| 任务 | 文档 |
+| --- | --- |
+| 文本、EPUB、YouTube 字幕导入 | [导入](references/importing.md) |
+| EPUB 章节或题材筛选、保留封面 | [选章](references/epub-selection.md) |
+| 课程、正文、生词、阅读位置与历史 | [读取](references/reading.md) |
+| 从停留段落继续阅读和讨论 | [接着读](references/reading-companion.md) |
+| 统计口径、JSON 和 CSV 导出 | [统计](references/statistics.md) |
+| 笔记、高亮、Markdown 和原始 JSON 导出 | [笔记](references/annotations.md) |
+| 个人讲解与本地草稿校验 | [ReadPilot](references/readpilot.md) |
 
 ## 工具选择
 
@@ -42,8 +54,8 @@ description_en: Use the WordTower MCP connector to import English content, revie
 1. 先查询实时权限、额度与每日剩余次数。
 2. 用户要求导入文本时，预览并取得报价。用户明确要求导入且额度足够时，使用预览 ID 和一个稳定的幂等键提交。仅分析或预览时停在预览。
 3. EPUB 由客户端本地读取并计算文件大小与 SHA-256，申请单对象签名上传地址。客户端把文件字节直接 PUT 到该地址，不能附带词塔 Key，也不能跟随上传重定向。远程 MCP 服务不能读取用户的本机文件路径。完成上传后，用 upload_id 预览并提交。
-4. 用户只要部分章节时，先在本地生成保留封面和选中章节的 EPUB，再上传。缺少可用的 EPUB 处理工具时说明需要准备选章版，不能悄悄导入整本。
-5. YouTube 必须提供实际字幕，不能根据链接臆造正文或时间戳。优先保留 JSON3 的真实词偏移。工具接收结构化字幕数组，JSON3 转换为 text、start、duration，并保留 segs 中 utf8 和相对起点的 tOffsetMs。没有词时间时按段落同步。
+4. 用户只要部分章节时，先在本地生成保留封面和选中章节的 EPUB，再上传。使用包内 epub_select.py，按选章文档校验原文件哈希和原文证据后构建选章版。
+5. 只有单视频链接时，先按导入文档运行包内 youtube_subtitles.py，读取生成的 preview_request 并通过 MCP 预览；脚本只需 Python 3 与可访问 YouTube 的网络，不读取词塔 Key。YouTube 必须提供实际字幕，不能根据链接臆造正文或时间戳。优先保留 JSON3 的真实词偏移。工具接收结构化字幕数组，JSON3 转换为 text、start、duration，并保留 segs 中 utf8 和相对起点的 tOffsetMs。没有词时间时按段落同步。
 6. 提交后轮询状态，仅 succeeded 表示成功。结果不明时保留原请求和原幂等键，避免重复建课。签名上传地址过期时重新取得地址。
 
 ## 授权与错误

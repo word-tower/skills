@@ -72,13 +72,28 @@ def main():
     parser.add_argument("request_file", type=Path, help="JSON request without credentials")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--format", choices=("json", "csv", "markdown"), default="json")
+    parser.add_argument("--bundle", action="store_true", help="Render an already collected MCP export locally, without credentials")
     args = parser.parse_args()
-    if args.request_file.stat().st_size > 1024 * 1024:
-        raise ValueError("Request file too large")
+    max_size = 20 * 1024 * 1024 if args.bundle else 1024 * 1024
+    if args.request_file.stat().st_size > max_size:
+        raise ValueError("Input file too large")
     payload = json.loads(args.request_file.read_text(encoding="utf-8-sig"))
     if not isinstance(payload, dict):
         raise ValueError("Expected a JSON object")
-    bundle = collect(payload, load_config())
+    if args.bundle:
+        bundle = payload.get("data", payload)
+        if not isinstance(bundle, dict) or bundle.get("format_version") not in {
+                "wordtower.annotations.v1", "wordtower.statistics.v1"}:
+            raise ValueError("Expected a complete WordTower export bundle")
+        if bundle["format_version"] == "wordtower.annotations.v1" and (
+                bundle.get("complete") is not True or not isinstance(bundle.get("items"), list)):
+            raise ValueError("Finish collecting all annotation pages before exporting")
+        if bundle["format_version"] == "wordtower.annotations.v1":
+            identifiers = [item["annotation_id"] for item in bundle["items"]]
+            if len(set(identifiers)) != len(identifiers):
+                raise ValueError("Duplicate annotation in export")
+    else:
+        bundle = collect(payload, load_config())
     # Markdown always has an exact JSON sidecar for later write-back.
     if args.format == "markdown":
         sidecar = args.output.with_suffix(args.output.suffix + ".json")

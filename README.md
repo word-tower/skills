@@ -48,3 +48,5 @@ YouTube 导入可说「把这个 YouTube 视频和这份 VTT 字幕导入词塔�
 ## WorkBuddy MCP 连接器
 
 WorkBuddy 可使用带 API Key 输入表单的词塔 MCP 连接器，安装与连接方法见 [WorkBuddy 连接教程](connectors/workbuddy/README.md)。
+
+单个 YouTube 链接可由包内 `youtube_subtitles.py` 获取自带字幕并保留源字幕的词时间；需要 Python 3 和可访问 YouTube 的网络，无需 yt-dlp 或其他 Skill。无字幕或访问受限时可提供已有字幕文件，详见[导入指引](skills/wordtower/references/importing.md#只有视频链接时)。

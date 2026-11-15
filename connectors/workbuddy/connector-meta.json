@@ -4,7 +4,7 @@
   "name_en": "WordTower",
   "source": "wordtower",
   "type": "mcp",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "auth_mode": "token",
   "minWorkbuddyVersion": "4.23.0",
   "description": "Connect WordTower to import English content and review reading, vocabulary and notes.",
