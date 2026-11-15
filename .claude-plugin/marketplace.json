@@ -1,0 +1,13 @@
+{
+  "name": "wordtower",
+  "owner": {
+    "name": "WordTower"
+  },
+  "plugins": [
+    {
+      "name": "wordtower",
+      "source": "./",
+      "description": "词塔英语学习 Skill，复用仓库 skills/wordtower。"
+    }
+  ]
+}

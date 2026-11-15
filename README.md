@@ -50,3 +50,22 @@ YouTube 导入可说「把这个 YouTube 视频和这份 VTT 字幕导入词塔�
 WorkBuddy 可使用带 API Key 输入表单的词塔 MCP 连接器，安装与连接方法见 [WorkBuddy 连接教程](connectors/workbuddy/README.md)。
 
 单个 YouTube 链接可由包内 `youtube_subtitles.py` 获取自带字幕并保留源字幕的词时间；需要 Python 3 和可访问 YouTube 的网络，无需 yt-dlp 或其他 Skill。无字幕或访问受限时可提供已有字幕文件，详见[导入指引](skills/wordtower/references/importing.md#只有视频链接时)。
+
+## Claude Code 插件安装
+
+仓库发布后，也可在 Claude Code 内通过插件市场安装同一份 Skill：
+
+```text
+/plugin marketplace add word-tower/skills
+/plugin install wordtower@wordtower
+```
+
+插件和普通 Skill 使用相同的 `WORDTOWER_API_KEY` 配置，同一客户端选择一种安装方式。默认通过网关连接；可选 MCP 配置和 Codex 安装说明见[客户端指引](docs/clients.md)。
+
+## 一键生成安装包
+
+```sh
+python3 scripts/build.py --all
+```
+
+在 `dist/` 生成普通 Skill、WorkBuddy 连接器、Claude Code 插件和 Codex 安装材料。业务脚本、领域文档和 Skill 路由共用一份源码，WorkBuddy 只适配凭证与 MCP 调用协议。构建不修改本机客户端配置，也不读取 Key。完整参数、版本与更新方式见[构建与发布](docs/clients.md#构建与发布)。

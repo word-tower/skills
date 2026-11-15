@@ -13,49 +13,41 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Publish Skill release
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate and build client packages
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          python3 -m unittest discover -s tests -q
+          python3 scripts/build.py --check
+          python3 - <<'PYTHON'
+          import os
+          from scripts.build import version
+          if os.environ['RELEASE_TAG'] != 'v' + version():
+              raise SystemExit('Release tag must match the Skill version')
+          PYTHON
+          python3 scripts/build.py --all
+      - name: Publish release assets
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          python3 - <<'PYTHON'
-          import subprocess
-          import zipfile
-          import os
-          from pathlib import PurePosixPath
-
-          files = subprocess.check_output(["git", "ls-files", "skills/wordtower"], text=True).splitlines()
-          with zipfile.ZipFile(f"wordtower-{os.environ['RELEASE_TAG']}.zip", "w", zipfile.ZIP_DEFLATED) as archive:
-              for name in files:
-                  path = PurePosixPath(name)
-                  relative = path.relative_to("skills/wordtower")
-                  allowed = str(relative) in {"SKILL.md", "config.json"} or (
-                      len(relative.parts) == 2 and (
-                          relative.parts[0] == "references" and relative.suffix == ".md" or
-                          relative.parts[0] == "scripts" and relative.suffix == ".py"))
-                  if not allowed:
-                      raise SystemExit(f"Unexpected Skill release file: {name}")
-                  archive.write(name, str(PurePosixPath("wordtower") / relative))
-          PYTHON
           cat > release-notes.md <<'NOTES'
-          词塔 WordTower Skill
+          词塔 WordTower
 
-          支持课程和阅读位置查询、文本与 EPUB 导入、YouTube 视频与时间戳字幕导入、学习统计与笔记导出，以及个人 ReadPilot 讲解。
+          Assets 包含普通 Skill、WorkBuddy MCP 连接器、Claude Code 插件和 Codex 安装材料。
+          各渠道共用 Skill 脚本与领域文档；按客户端选择一个包，安装与 Key 配置见仓库 README。
 
-          可用操作通过 /_list 查询，权限、额度、剩余导入次数和重置时间以 /account/capabilities 的实时回包为准。
+          通用安装：npx skills add word-tower/skills -g
+          Claude Code：添加 word-tower/skills 插件市场，安装 wordtower@wordtower。
+          WorkBuddy ZIP 需在连接器平台审核发布，不会随 GitHub Release 自动上架。
 
-          标注来源通过 origin 区分。Agent 独立新增记为 agent，合并结果及 App 编辑记为 user。Agent 当前支持标注读取、导出、新增和合并。
-
-          v0.7.4 补齐 WorkBuddy 发布所需的顶层 version、display_name、display_name_en、description_zh 和 description_en。保留原有 name、description 和 metadata.version，支持多客户端安装。
-
-          支持直接读取 YouTube JSON3 字幕并保留真实逐词时间。JSON3 逐词导入需要服务端已部署对应的校验与持久化更新。
-
-          在 Assets 中下载 wordtower 版本 ZIP，解压后使用 wordtower 目录安装。也可运行 npx skills add word-tower/skills -g 安装。
-
-          在词塔「账户 → Skill 与 Token」创建以 wtk- 开头的 API Key，并在 AI 客户端本地配置 WORDTOWER_API_KEY。
+          权限、额度及可用操作以服务端实时返回为准。包内不包含用户 Key 或后端服务代码。
           NOTES
           if ! gh release view "$RELEASE_TAG" > /dev/null 2>&1; then
-            gh release create "$RELEASE_TAG" --verify-tag --title "WordTower Skill ${RELEASE_TAG}" --notes-file release-notes.md
+            gh release create "$RELEASE_TAG" --verify-tag --title "WordTower ${RELEASE_TAG}" --notes-file release-notes.md
           fi
-          gh release upload "$RELEASE_TAG" "wordtower-${RELEASE_TAG}.zip" --clobber
+          gh release upload "$RELEASE_TAG" dist/*.zip --clobber

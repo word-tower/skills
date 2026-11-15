@@ -23,7 +23,7 @@ class WorkBuddyPackageTests(unittest.TestCase):
         self.addCleanup(self.temporary.cleanup)
         self.directory = Path(self.temporary.name)
         package = self.directory / "connector.zip"
-        self.assertEqual(builder.build(package), "0.1.2")
+        self.assertEqual(builder.build(package), "0.1.3")
         with zipfile.ZipFile(package) as archive:
             self.assertEqual(len(archive.namelist()), 19)
             archive.extractall(self.directory)

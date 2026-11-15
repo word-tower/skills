@@ -42,6 +42,10 @@ https://api.wordtower.cn/api/agent/v1/mcp
 
 连接器包包含与普通 Skill 共用的 EPUB 选章、字幕读取、文件上传、导出和 ReadPilot 校验脚本，以及全部领域文档。业务调用通过 MCP，本地脚本完成文件准备和导出。使用这些本地能力需要客户端能够执行 Python 3 并访问用户选择的文件。
 
-文档和脚本由打包程序从普通 Skill 目录读取。更新 `skills/wordtower/scripts/` 或共享领域文档后，重新生成连接器包即可同步；连接器专用的 MCP 调用说明单独维护。两个包仍分别保留各自的调用入口与凭证配置方式。
+文档和脚本由打包程序从普通 Skill 目录读取。更新 `skills/wordtower/scripts/` 或共享领域文档后，重新生成连接器包即可同步；连接器专用的 MCP 调用说明在 protocol.md 维护，SKILL.md 从公共入口生成。两个包仍分别保留各自的调用入口与凭证配置方式。
 
 单视频字幕获取使用包内 `youtube_subtitles.py`，需要 Python 3 和可访问 YouTube 的网络，不依赖 yt-dlp 或第三方 Skill。只获取视频自带字幕，不下载音视频或本地转录；访问受限或无字幕时需提供已有字幕文件。
+
+## 生成连接器包
+
+在仓库根目录运行 `python3 scripts/build.py --target workbuddy`，或用 `--all` 同时生成其他渠道产物。旧的 `python3 connectors/workbuddy/build.py --output /tmp/wordtower-workbuddy.zip` 仍可使用。产物默认在 dist/，生成后需自行上传审核；不包含用户 Key。详见[统一构建](../../docs/clients.md#构建与发布)。
