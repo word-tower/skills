@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "wordtower": {
+      "type": "streamableHttp",
+      "url": "https://api.wordtower.cn/api/agent/v1/mcp",
+      "headers": {
+        "Authorization": "Bearer ${WORDTOWER_API_KEY}"
+      },
+      "timeout": 30000
+    }
+  }
+}

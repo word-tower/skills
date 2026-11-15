@@ -1,0 +1,18 @@
+{
+  "title": "连接词塔",
+  "title_en": "Connect WordTower",
+  "description": "在词塔「账户 → Skill 与 Token」创建 API Key 并勾选权限，再粘贴到下方。凭证由 WorkBuddy 保存在本机；可随时在词塔修改权限或撤销。",
+  "description_en": "Create an API Key and choose permissions in WordTower Account → Skill & Token. WorkBuddy stores it locally. Change permissions or revoke it in WordTower.",
+  "docUrl": "https://github.com/word-tower/skills#2-创建-token-并配置到客户端",
+  "docLabel": "如何获取词塔 API Key？",
+  "fields": [
+    {
+      "key": "WORDTOWER_API_KEY",
+      "label": "词塔 API Key",
+      "type": "password",
+      "required": true,
+      "placeholder": "wtk-…",
+      "description": "首次可只授权课程与阅读位置。导入、统计、正文或笔记需要单独授权。请勿填写 App 登录 Token。"
+    }
+  ]
+}

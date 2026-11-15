@@ -1,0 +1,23 @@
+{
+  "name": "词塔",
+  "name_zh": "词塔",
+  "name_en": "WordTower",
+  "source": "wordtower",
+  "type": "mcp",
+  "version": "0.1.0",
+  "auth_mode": "token",
+  "minWorkbuddyVersion": "4.23.0",
+  "description": "Connect WordTower to import English content and review reading, vocabulary and notes.",
+  "description_zh": "连接词塔，导入英语学习内容，查询阅读位置与生词，导出统计和笔记，保存讨论总结与个人讲解。",
+  "description_en": "Connect WordTower to import English content and review reading, vocabulary and notes.",
+  "examples_zh": [
+    "用词塔告诉我最近在读哪本书",
+    "导出我这周的学习统计和笔记",
+    "把这篇英文文章导入词塔"
+  ],
+  "examples_en": [
+    "Show what I recently read in WordTower",
+    "Export my weekly learning statistics and notes",
+    "Import this English article into WordTower"
+  ]
+}

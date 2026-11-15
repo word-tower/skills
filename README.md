@@ -43,3 +43,8 @@ export WORDTOWER_API_KEY='替换为你的 API Key'
 有关授权、请求格式和错误处理，见[调用协议](skills/wordtower/references/protocol.md)。
 
 YouTube 导入可说「把这个 YouTube 视频和这份 VTT 字幕导入词塔，保留时间轴」。支持 JSON3 逐词时间戳，以及 SRT、VTT 和结构化 JSON 字幕，需要授权「导入课程」。可用权限、额度和剩余次数以服务端实时查询结果为准。具体命令见[导入指引](skills/wordtower/references/importing.md#youtube-视频与带时间戳字幕)。
+
+
+## WorkBuddy MCP 连接器
+
+WorkBuddy 可使用带 API Key 输入表单的词塔 MCP 连接器，安装与连接方法见 [WorkBuddy 连接教程](connectors/workbuddy/README.md)。
