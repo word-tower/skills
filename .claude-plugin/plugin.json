@@ -1,6 +1,6 @@
 {
   "name": "wordtower",
-  "version": "0.7.5",
+  "version": "0.8.0",
   "description": "词塔英语学习助手：导入内容、接着读、导出统计与笔记、保存个人讲解。",
   "author": {
     "name": "WordTower"

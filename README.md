@@ -42,6 +42,8 @@ export WORDTOWER_API_KEY='替换为你的 API Key'
 
 有关授权、请求格式和错误处理，见[调用协议](skills/wordtower/references/protocol.md)。
 
+你也可以说「把这三篇文章都导入我的『每周精读』合集」或「新建『英语访谈』合集，把这几个 YouTube 视频导进去」。此功能需要支持手动合集导入的词塔后端。[手动合集导入指引](skills/wordtower/references/importing.md#导入到手动合集)
+
 YouTube 导入可说「把这个 YouTube 视频和这份 VTT 字幕导入词塔，保留时间轴」。支持 JSON3 逐词时间戳，以及 SRT、VTT 和结构化 JSON 字幕，需要授权「导入课程」。可用权限、额度和剩余次数以服务端实时查询结果为准。具体命令见[导入指引](skills/wordtower/references/importing.md#youtube-视频与带时间戳字幕)。
 
 

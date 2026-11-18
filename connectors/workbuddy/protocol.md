@@ -17,6 +17,8 @@ python3 scripts/request.py --youtube "https://youtu.be/dQw4w9WgXcQ" --subtitles 
 
 读取输出并调用对应的 MCP 预览工具。支持 SRT、VTT、字幕数组 JSON、YouTube JSON3，JSON3 的真实词偏移会保留。取得预览后，按用户意图、权限和实时额度提交，保留原幂等键并查询任务状态。
 
+将文章或 YouTube 视频导入合集时，按[合集导入流程](importing.md#导入到手动合集)调用 `wordtower_imports_collections`，并在预览阶段填写目标字段。
+
 ## EPUB 选章与上传
 
 选章、题材判断和封面保留按 [EPUB 选章](epub-selection.md)执行，使用包内 `epub_select.py`。构建选章版后先准备上传参数。

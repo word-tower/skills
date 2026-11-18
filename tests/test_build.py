@@ -53,7 +53,7 @@ class BuildTests(unittest.TestCase):
         source = (builder.SKILL / "SKILL.md").read_text()
         table = source[source.index("| 任务 | 文档 |"):source.index("连接凭据从")]
         self.assertIn(table, text)
-        self.assertIn('version: "0.1.3"', text)
+        self.assertIn('version: "0.1.4"', text)
         self.assertNotIn("连接凭据从用户本地", text)
         self.assertNotIn("使用包内 scripts/request.py 调用", text)
         self.assertIn("凭证由 WorkBuddy 连接表单管理", text)

@@ -174,6 +174,9 @@ def main():
     parser.add_argument("--subtitles", type=Path, help="SRT, VTT, JSON or YouTube JSON3 subtitles")
     parser.add_argument("--youtube", help="YouTube video URL for the subtitles")
     parser.add_argument("--title", help="Title for a file import")
+    destination = parser.add_mutually_exclusive_group()
+    destination.add_argument("--collection-id", help="Existing manual collection ID for text or YouTube")
+    destination.add_argument("--new-collection-title", help="Create a manual collection on submission")
     parser.add_argument("--prepare-only", action="store_true", help="Prepare parameters locally without credentials or API calls")
     parser.add_argument("--upload-response", type=Path, help="MCP signed upload response; upload EPUB without an API Key")
     parser.add_argument("--expected-sha256", help="Original EPUB hash from the upload request")
@@ -186,6 +189,8 @@ def main():
         parser.error("--upload-response requires --epub and --expected-sha256, without --prepare-only")
     if args.expected_sha256 and not args.upload_response:
         parser.error("--expected-sha256 requires --upload-response")
+    if (args.collection_id is not None or args.new_collection_title is not None) and not (args.text or args.subtitles):
+        parser.error("collection options require --text or --subtitles; set the field directly in JSON requests")
     if args.upload_response:
         data = read_epub(args.epub)
         if hashlib.sha256(data).hexdigest() != args.expected_sha256:
@@ -221,6 +226,10 @@ def main():
             payload = json.loads(path.read_text(encoding="utf-8-sig"))
             if not isinstance(payload, dict):
                 raise ValueError("Request must be a JSON object")
+        if args.collection_id is not None:
+            payload["collection_id"] = args.collection_id
+        if args.new_collection_title is not None:
+            payload["new_collection_title"] = args.new_collection_title
         result = payload if args.prepare_only else call(payload, load_config())
     print(json.dumps(result, ensure_ascii=False, indent=2))
 

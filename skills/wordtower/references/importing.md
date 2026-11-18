@@ -2,6 +2,28 @@
 
 预览、上传和提交均需服务端开放对应操作及 Token 授权。文本及 YouTube 需要 imports:text，EPUB 需要 imports:epub，App 的「导入课程」统一授予这两项权限。查询状态需要 imports:read，创建导入连接时服务端同时授予状态权限。用户明确要求导入后，在每日次数和解析额度范围内自动提交。
 
+## 导入到手动合集
+
+文章、TXT/Markdown 和 YouTube 视频课程可以导入自己的未分享手动合集。先用 /_list（MCP 客户端也可查看实时工具 schema）确认当前连接开放 /imports/collections 和对应预览的目标字段。服务未开放该能力时，说明无法按指定合集导入，保留目标要求。
+
+- **导入已有合集**。调用 /imports/collections，支持 query、limit 和 cursor。查完相关分页后匹配实际标题或用户指定的 ID。有多个同名项时让用户选；找不到时说明情况。每条预览填写返回的 collection_id（字符串）。
+- **新建合集并导入**。仅第一条有效内容的预览填写 new_collection_title。第一条被服务端接受时，同时创建合集并在提交响应中返回 collection_id。剩余条目预览统一填写这个 ID，即使有同名合集也使用本次新建的 ID。
+- collection_id 和 new_collection_title 只能二选一。预览的 destination 会回显目标；换目标须重新预览。提交仍只传 preview_id 与 idempotency_key。首条提交结果不明时，重放原请求取得原任务及合集 ID，再继续余下条目。
+
+```json
+{"api_name":"/imports/collections","query":"精读文章"}
+```
+
+```json
+{"api_name":"/imports/preview","title":"An English article","text":"The user-selected passage.","collection_id":"123"}
+```
+
+本地文本或字幕文件可给 request.py 加 `--collection-id 123` 或 `--new-collection-title "英语视频"`。由 youtube_subtitles.py 生成的预览 JSON 可直接加入其中一个目标字段，再向网关或 MCP 提交预览。
+
+多篇文章或多个视频按条分别预览、提交和查询状态，按用户给定顺序追加到合集目录。根据当天剩余次数、解析余额和并发限制推进；达到并发上限时先等已接受任务进入终态。汇报每条结果，区分成功、失败、处理中及未提交。目标失效时停止该合集的后续提交，重新核实目标。计划导入失败或部分完成时，由 App 管理需要调整的合集或课程。
+
+EPUB 整书及选章导入沿用书籍合集流程。书籍、分享或图书馆导入的合集，以及正在分享的手动合集，均不可选作本功能的目标。合集删除、移出课程和移动已有课程仍在词塔 App 内操作。
+
 ## 文本或 TXT
 
 直接文本使用 /imports/preview，参数 title、text、可选 source_url（只记来源，服务端不抓取）。TXT/Markdown 纯文本文件可用 `python3 scripts/request.py --text 文件路径 --title 标题`；文件必须是 UTF-8，脚本在本地读取并提交正文，不向服务器传本机路径。

@@ -20,6 +20,7 @@
 - QUOTA_EXHAUSTED：额度不足，无新任务被接受，不能自动购买/重复扣费。
 - CONFIRMATION_REQUIRED：仅旧服务会返回；停止自动提交并说明服务端仍要求旧确认流程，不伪造批准、不索取登录 JWT。
 - PREVIEW_EXPIRED：重新预览，不复用失效内容；用户仍要求导入时可继续自动提交。
+- IMPORT_COLLECTION_UNAVAILABLE：指定合集已失效或不符合导入条件；重新查找有权导入的手动合集。
 - IDEMPOTENCY_CONFLICT：核对已有导入/笔记操作，不能换键绕过重复保护。
 - RATE_LIMITED：按 Retry-After 退避；写请求保留原键，本次最多重试 3 次。
 - DAILY_IMPORT_LIMIT_REACHED：当天文件数已用完，展示 limit/used/resets_at 后停止，不循环重试、不换 Key 或拆分任务绕过；次日由用户再次发起，除非用户明确要求安排定时任务。

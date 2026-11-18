@@ -23,7 +23,7 @@ class WorkBuddyPackageTests(unittest.TestCase):
         self.addCleanup(self.temporary.cleanup)
         self.directory = Path(self.temporary.name)
         package = self.directory / "connector.zip"
-        self.assertEqual(builder.build(package), "0.1.3")
+        self.assertEqual(builder.build(package), "0.1.4")
         with zipfile.ZipFile(package) as archive:
             self.assertEqual(len(archive.namelist()), 19)
             archive.extractall(self.directory)
@@ -56,9 +56,14 @@ class WorkBuddyPackageTests(unittest.TestCase):
         (self.skill / "config.json").unlink()
         text = self.directory / "lesson.txt"
         text.write_text("Hello learner. 😀", encoding="utf-8")
-        result = self.run_script("request.py", "--text", text, "--prepare-only")
+        result = self.run_script("request.py", "--text", text, "--prepare-only", "--collection-id", "123")
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(json.loads(result.stdout)["text"], "Hello learner. 😀")
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["text"], "Hello learner. 😀")
+        self.assertEqual(payload["collection_id"], "123")
+        conflict = self.run_script("request.py", "--text", text, "--prepare-only",
+                                   "--collection-id", "123", "--new-collection-title", "English")
+        self.assertEqual(conflict.returncode, 2)
 
     def test_prepare_epub_hash_and_signed_upload(self):
         epub = self.directory / "book.epub"
@@ -105,9 +110,11 @@ class WorkBuddyPackageTests(unittest.TestCase):
         subtitle.write_text(json.dumps({"events": [{"tStartMs": 1000, "dDurationMs": 2000,
             "segs": [{"utf8": "Hello", "tOffsetMs": 0}, {"utf8": " world.", "tOffsetMs": 500}]}]}))
         result = self.run_script("request.py", "--youtube", "https://youtu.be/dQw4w9WgXcQ",
-                                 "--subtitles", subtitle, "--prepare-only")
+                                 "--subtitles", subtitle, "--prepare-only", "--new-collection-title", "English videos")
         self.assertEqual(result.returncode, 0, result.stderr)
-        cue = json.loads(result.stdout)["subtitles"][0]
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["new_collection_title"], "English videos")
+        cue = payload["subtitles"][0]
         self.assertEqual(cue["segs"][1]["tOffsetMs"], 500)
         self.assertEqual(cue["start"], 1.0)
 
